@@ -1,0 +1,3 @@
+# 商家结算争议的PostgreSQL租户隔离与冲销复核
+
+本仓库为单题Windows复现仓库。PostgreSQL Client通过psql连接Windows本机PostgreSQL17服务，完成结算层重建、租户读写探针、冲销拒绝和财务导出。

@@ -1,0 +1,6 @@
+{
+  "name": "ale-q10413-windows-repro",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" }
+}

@@ -1,0 +1,72 @@
+name: generate-reference-windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install and start PostgreSQL17
+        shell: pwsh
+        run: |
+          choco install postgresql17 --no-progress -y --params '/Password:postgres /Port:55417'
+          $psql = Get-ChildItem 'C:\Program Files\PostgreSQL\17\bin\psql.exe' -ErrorAction Stop | Select-Object -First 1
+          $pgReady = Join-Path $psql.DirectoryName 'pg_isready.exe'
+          $ready = $false
+          for ($attempt = 0; $attempt -lt 30; $attempt++) {
+            & $pgReady -h 127.0.0.1 -p 55417 -U postgres
+            if ($LASTEXITCODE -eq 0) { $ready = $true; break }
+            Start-Sleep -Seconds 1
+          }
+          if (-not $ready) { throw 'PostgreSQL17 did not become ready' }
+          "PSQL_PATH=$($psql.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'PGHOST=127.0.0.1' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'PGPORT=55417' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'PGUSER=postgres' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'PGPASSWORD=postgres' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          'PGDATABASE=postgres' | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Generate Reference from empty database state
+        shell: pwsh
+        run: |
+          $room = Join-Path $env:RUNNER_TEMP 'Q10413 Reference 中文 空格'
+          New-Item -ItemType Directory -Path $room -Force | Out-Null
+          Expand-Archive -LiteralPath artifacts/输入数据包.zip -DestinationPath $room -Force
+          $inputRoot = Join-Path $room input_data
+          New-Item -ItemType Directory -Path (Join-Path $inputRoot output) -Force | Out-Null
+          Copy-Item verification/reference-source/repair_settlement_access.sql (Join-Path $inputRoot output/repair_settlement_access.sql)
+          & (Join-Path $inputRoot tools/run-task.ps1) -PsqlPath $env:PSQL_PATH
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $env:PSQL_PATH -X -Atc 'SHOW server_version_num'
+          if (-not $LASTEXITCODE -eq 0) { exit $LASTEXITCODE }
+          Compress-Archive -Path (Join-Path $inputRoot output) -DestinationPath generated-reference.zip -Force
+          $evidence = [ordered]@{
+            result = 'PASS'
+            platform = 'win32'
+            runner_os = $env:RUNNER_OS
+            commit_sha = $env:GITHUB_SHA
+            workflow_run_id = $env:GITHUB_RUN_ID
+            server_version_num = (& $env:PSQL_PATH -X -Atc 'SHOW server_version_num').Trim()
+            psql_version = (& $env:PSQL_PATH --version).Trim()
+            reference_sha256 = (Get-FileHash generated-reference.zip -Algorithm SHA256).Hash.ToLower()
+          }
+          $evidence | ConvertTo-Json | Set-Content generated-reference.json -Encoding utf8NoBOM
+      - uses: actions/upload-artifact@v4
+        with:
+          name: q10413-generated-reference
+          path: |
+            generated-reference.zip
+            generated-reference.json
+          if-no-files-found: error
+          retention-days: 1
