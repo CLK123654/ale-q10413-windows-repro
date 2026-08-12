@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "result": "PASS",
+  "scanned_sources": 198,
+  "violations": [],
+  "answer_sheets": [
+    "交付物答案清单",
+    "固定字段答案",
+    "固定集合答案",
+    "固定数值答案",
+    "允许变体答案"
+  ],
+  "specification_sheets": [
+    "任务规格转化"
+  ],
+  "task_spec_row_count": 21,
+  "task_spec_column_count": 2,
+  "task_asset_id": "postgres_settlement_access_reversal_review",
+  "forbidden_spec_labels": [],
+  "declared_delivery_paths": [
+    "output/repair_settlement_access.sql",
+    "output/reports/database_contract.csv",
+    "output/reports/reversal_review.csv",
+    "output/reports/settlement_export.csv",
+    "output/reports/tenant_access_probe.csv"
+  ],
+  "reference_paths": [
+    "output/repair_settlement_access.sql",
+    "output/reports/database_contract.csv",
+    "output/reports/reversal_review.csv",
+    "output/reports/settlement_export.csv",
+    "output/reports/tenant_access_probe.csv"
+  ],
+  "business_inputs": [
+    "input_data/database/schema.sql",
+    "input_data/database/seed.sql",
+    "input_data/rules/settlement_policy.csv",
+    "input_data/rules/report_layout.csv"
+  ],
+  "business_inputs_present": true,
+  "online_ai_detector_used_as_conclusion": false
+}

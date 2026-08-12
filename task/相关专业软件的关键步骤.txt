@@ -1,0 +1,10 @@
+1. 用psql连接专用PostgreSQL17数据库，执行database/schema.sql与database/seed.sql并读取三张raw表
+2. 通过psql的\copy把settlement_policy.csv装入当前会话的临时策略表
+3. 执行repair_settlement_access.sql，重建策略副本、租户、商户、冲销判定和受控账本对象
+4. 查询原凭证关系并按策略priority保留每条冲销的首要原因
+5. 建立同租户外键、冲销形状检查、部分唯一索引和PL/pgSQL触发器，执行拒绝写入探针
+6. 对三张结算表执行ENABLE与FORCE ROW LEVEL SECURITY，创建包含USING和WITH CHECK的租户策略
+7. 创建security_invoker结算视图并授予reader只读权限、writer受限读写权限
+8. 使用SET ROLE和set_config切换租户上下文，采集读取行数、越权SQLSTATE和临时写入结果
+9. 按report_layout.csv指定的字段与业务键导出四张CSV，并用pg_catalog复核策略和视图合同
+10. 联查四张报告与settlement对象，确认冲销去向、租户边界和商户金额能够互相追溯，并检查raw表没有变化

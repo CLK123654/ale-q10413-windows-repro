@@ -1,0 +1,18 @@
+商家运营在月度结算前发现两类问题：停用商户的凭证仍会进入导出，同一原凭证也可能被重复冲销。最近一次权限检查还发现，结算视图没有稳定继承租户访问边界。请在隔离的PostgreSQL17实例中修复结算层，给财务和数据库平台各留一份可以复查的结果。
+
+输入数据包位于input_data。database/schema.sql和database/seed.sql提供脱敏后的租户、商户与凭证；rules/settlement_policy.csv规定报表区间、有效状态、允许类型、租户参数和冲销原因顺序；rules/report_layout.csv规定四张报告的字段与排序；starter/repair_settlement_access.sql是待完成文件。README.md说明材料用途和运行方式。
+
+把完成版SQL保存为output/repair_settlement_access.sql。使用PostgreSQL Client中的psql连接专用数据库，在input_data根目录运行tools/run-task.ps1。入口会把策略装入当前psql会话，再执行完成版SQL并导出报告。raw模式是只读来源，处理过程不得改写三张原始表。
+
+结算层只接收策略区间内、状态合格且类型允许的凭证。冲销要先关联原凭证，再按策略优先级判断跨租户引用、冲销再次被冲销、金额未镜像和重复冲销；只有同租户、镜像金额且未重复的首条冲销可以进入受控账本。金额单位保持整数分。
+
+tenant_account、merchant_profile和settlement_ledger都要启用并强制行级安全。访问策略从tenant_setting指定的会话参数读取当前租户，同时约束读取和写入。settlement_export使用调用者权限，使只读角色只能看到当前租户的汇总。入口会实际切换reader和writer角色，检查两个租户、空上下文、跨租户写入和本租户临时写入。
+
+交付以下文件：
+output/repair_settlement_access.sql
+output/reports/settlement_export.csv
+output/reports/reversal_review.csv
+output/reports/tenant_access_probe.csv
+output/reports/database_contract.csv
+
+settlement_export.csv供财务核对商户净额，reversal_review.csv供账本工程师处理冲销争议，tenant_access_probe.csv供权限管理员确认读写边界，database_contract.csv供发布负责人检查行级安全、策略数量和视图权限。四张报告必须来自本次PostgreSQL执行，输入保持不变。正式处理只连接指定的隔离数据库，不访问支付、商户或财务生产系统。
