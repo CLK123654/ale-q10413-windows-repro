@@ -23,11 +23,10 @@ jobs:
       - name: Install and start PostgreSQL17
         shell: pwsh
         run: |
-          choco install postgresql17 --version=17.10.1 -y --no-progress --params '/Password:postgres'
+          choco install postgresql17 -y --no-progress --params '/Password:postgres'
           $pgBin = 'C:\Program Files\PostgreSQL\17\bin'
           if (-not (Test-Path (Join-Path $pgBin psql.exe))) { throw 'psql.exe not found' }
-          $data = Join-Path $env:RUNNER_TEMP q10413-pgdata
-          New-Item -ItemType Directory -Path $data -Force | Out-Null
+          $data = Join-Path $env:RUNNER_TEMP "q10413-pgdata-$env:GITHUB_RUN_ID"
           & (Join-Path $pgBin initdb.exe) -D $data -U postgres --auth=trust --encoding=UTF8 --locale=C
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & (Join-Path $pgBin pg_ctl.exe) -D $data -o '-p 55417 -h 127.0.0.1' -w start
