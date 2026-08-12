@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "gate": "candidate_score_answer_leak_scan",
+  "source": "评分表.txt",
+  "rules": [
+    "sample_voucher_id",
+    "sample_probe_id",
+    "sample_tenant_or_merchant",
+    "complete_result_set",
+    "fixed_count_or_distribution",
+    "ordered_answer_values",
+    "sample_money_or_amount",
+    "sample_sqlstate_mapping"
+  ],
+  "hits": [],
+  "hit_count": 0,
+  "pass": true
+}

@@ -38,5 +38,7 @@
     "input_data/rules/report_layout.csv"
   ],
   "business_inputs_present": true,
+  "humanizer_score": 47,
+  "candidate_score_answer_leak_hits": 0,
   "online_ai_detector_used_as_conclusion": false
 }

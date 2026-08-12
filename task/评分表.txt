@@ -1,83 +1,83 @@
-检查项一：交付结构与PostgreSQL入口
-检查项内容：完成版SQL和四张报告位于声明路径，PowerShell入口调用psql完成处理
-标准答案：交付集合为output/repair_settlement_access.sql及output/reports中的settlement_export.csv、reversal_review.csv、tenant_access_probe.csv和database_contract.csv
-关键字段：五个相对路径；入口退出码；SHOW server_version_num
-容差：路径大小写逐字比较，PostgreSQL服务端主版本为17
-失败边界：文件缺失或不可读，入口未调用psql，数据库主版本不符
+检查项：交付结构与PostgreSQL入口
+检查项内容：Prompt声明的SQL和业务报告位于对应路径，PowerShell入口调用psql完成处理
+标准答案：交付路径以Prompt为准，入口使用PostgreSQL17服务执行SQL并导出CSV
+关键字段：Prompt声明的相对路径；入口退出码；SHOW server_version_num
+容差：路径大小写逐字比较，服务端主版本按环境依赖比较
+失败边界：声明文件缺失或不可读，入口未调用psql，数据库主版本不符
 可观察证据：输出清单、psql日志和服务端版本查询
-客观硬性标准：五个路径存在且入口返回0
-阈值：交付集合和入口全部满足
+客观硬性标准：声明路径可读且入口返回0
+阈值：交付与入口全部满足
 优先级：Gate项
 所属层级：L8运行验证或可执行行为层
 
-检查项二：原始数据保护与策略消费
-检查项内容：三张raw表保持原值，结算筛选与冲销顺序来自策略文件
-标准答案：raw_tenant_account、raw_merchant_profile和raw_settlement_ledger分别保留3、7和19条记录；策略副本包含settlement_policy.csv的全部行
-关键字段：raw模式三张表；settlement.policy的policy_kind、policy_key、policy_value、priority
-容差：源表逐列无序比较，策略按四列精确比较
-失败边界：修改来源表，漏载策略，或在SQL中按租户、商户和凭证样本标识分支
-可观察证据：处理前后源表摘要、settlement.policy和完成版SQL
-客观硬性标准：源表逐行一致且策略行全部消费
-阈值：三张源表和策略均满足
+检查项：来源保护与策略消费
+检查项内容：raw模式来源表保持原值，结算筛选与冲销次序来自策略文件
+标准答案：来源表按各自主键逐列等值；settlement.policy覆盖settlement_policy.csv的业务键和值
+关键字段：raw模式来源表；settlement.policy的policy_kind、policy_key、policy_value、priority
+容差：来源表按主键无序比较，策略按复合业务键精确比较
+失败边界：修改来源表，漏载策略，或按样本业务主键分支
+可观察证据：处理前后来源表、settlement.policy和完成版SQL
+客观硬性标准：来源表无差异且策略文件全部被消费
+阈值：所有来源表和策略行满足
 优先级：Gate项
 所属层级：L3输入数据导入与完整性层
 
-检查项三：冲销裁决与数据库拒绝
-检查项内容：六条原始冲销按公开优先级裁决，并由约束或触发器实际拒绝四条非法写入
-标准答案：V-B-005与V-A-008为valid；V-A-009为amount_mismatch且SQLSTATE23514；V-B-006为cross_tenant_reference且SQLSTATE23503；V-A-010为duplicate_reversal且SQLSTATE23505；V-B-007为reversal_of_reversal且SQLSTATE23514
+检查项：冲销裁决与数据库拒绝
+检查项内容：原始冲销按settlement_policy.csv的priority裁决，非法写入由PostgreSQL约束或触发器拒绝
+标准答案：check_status、reason和expected_sqlstate由原凭证关系、金额镜像、时间顺序及策略映射复算；observed_sqlstate来自实际写入
 关键字段：reversal_review.csv的voucher_id、check_status、reason、expected_sqlstate、observed_sqlstate
 容差：按voucher_id无序比较，枚举和SQLSTATE区分大小写
-失败边界：冲销缺项、原因次序错误、非法冲销进入账本，或observed_sqlstate不是数据库实际结果
+失败边界：冲销缺项、优先级错误、非法冲销进入账本，或数据库返回状态与策略映射不符
 可观察证据：reversal_review.csv、触发器、外键、检查约束和部分唯一索引
-客观硬性标准：六条判定正确且四条拒绝码匹配
-阈值：六条记录全部满足
+客观硬性标准：每条冲销裁决均可从输入与策略复算，拒绝状态来自数据库执行
+阈值：全部冲销满足
 优先级：高权重项
 所属层级：L6领域计算与专业规则层
 
-检查项四：租户行级安全
-检查项内容：三张结算表同时限制读取和写入，结算视图继承调用者权限
-标准答案：tenant_account、merchant_profile和settlement_ledger的relrowsecurity与relforcerowsecurity均为true；三条策略均含USING和WITH CHECK；settlement_export的security_invoker为true
+检查项：租户行级安全
+检查项内容：Prompt点名的结算表同时限制读取和写入，结算视图继承调用者权限
+标准答案：目标表启用并强制RLS，租户策略同时具有USING和WITH CHECK，settlement_export使用security_invoker
 关键字段：database_contract.csv的object_name、evidence_key、observed_value
-容差：对象集合无序比较，布尔值使用true或false小写形式
-失败边界：任一表未强制行级安全，策略缺少读写条件，或视图以所有者权限运行
+容差：对象按object_name和evidence_key无序比较，布尔值使用小写形式
+失败边界：目标表未强制RLS，策略缺少读写条件，或视图以所有者权限运行
 可观察证据：database_contract.csv、pg_class、pg_policies和视图reloptions
-客观硬性标准：八条数据库合同证据全部正确
-阈值：八条全部满足
+客观硬性标准：数据库合同记录与系统目录复算结果一致
+阈值：全部目标对象满足
 优先级：Gate项
 所属层级：L7产物结构 / Schema / 专业对象层
 
-检查项五：实际角色探针
-检查项内容：reader和writer角色在不同租户上下文中执行查询与写入
-标准答案：P01和P02分别观察2行；P03与P04观察0行；P05观察SQLSTATE42501；P06观察1行且临时凭证未保留
+检查项：实际角色访问边界
+检查项内容：reader和writer在本租户、跨租户与空上下文中执行查询或写入
+标准答案：observed_rows由对应租户上下文查询复算；observed_sqlstate由受限写入产生；临时写入不进入最终账本
 关键字段：tenant_access_probe.csv的probe_id、role_name、tenant_context、statement_kind、observed_rows、observed_sqlstate
-容差：按probe_id比较，空值和整数精确比较
-失败边界：空上下文泄露数据、跨租户读取有行、越权写入成功，或只检查策略文本未切换角色
-可观察证据：tenant_access_probe.csv与SET ROLE运行日志
-客观硬性标准：六条探针均与数据库行为一致
-阈值：六条全部满足
+容差：按probe_id无序比较，空值和整数精确比较
+失败边界：空上下文泄露数据、跨租户查询返回记录、越权写入成功，或未切换实际角色
+可观察证据：tenant_access_probe.csv、SET ROLE日志与settlement_ledger
+客观硬性标准：每条访问记录都与角色、上下文和数据库行为一致
+阈值：全部访问记录满足
 优先级：高权重项
 所属层级：L8运行验证或可执行行为层
 
-检查项六：商户结算导出
-检查项内容：受控账本按租户和商户汇总凭证数、金额、冲销数与报表状态
-标准答案：TNA/M100为4、7500、360、7140、1、ready；TNA/M101为2、9500、385、9115、0、ready；TNB/M200为2、16000、660、15340、0、ready；TNB/M201为2、0、0、0、1、ready_zero
+检查项：商户结算导出
+检查项内容：受控账本按租户和商户汇总凭证、金额、冲销与报表状态
+标准答案：业务主键来自合格租户和商户；计数与整数分金额由settlement_ledger分组复算；statement_status由净额规则确定
 关键字段：settlement_export.csv的tenant_id、merchant_id、posted_entry_count、gross_cents、fee_cents、net_cents、reversed_original_count、statement_status
 容差：按tenant_id和merchant_id无序比较，金额单位为整数分且容差0
-失败边界：草稿、区间外、停用商户、暂停租户或被拒绝冲销进入汇总，或零净额商户丢失
+失败边界：不合格租户、商户、凭证或被拒绝冲销进入汇总，或合格的零净额商户丢失
 可观察证据：settlement_export.csv、settlement_ledger和settlement_export视图
-客观硬性标准：四个业务键和全部指标正确
-阈值：四行全部满足
+客观硬性标准：每个业务键的指标与受控账本分组结果一致
+阈值：全部商户汇总满足
 优先级：高权重项
 所属层级：L9跨产物一致性与可追溯层
 
-检查项七：跨报告追溯关系
-检查项内容：财务导出、冲销判定、访问探针和数据库合同能够回到同一组数据库对象
-标准答案：reversal_review.csv中valid的两条冲销进入settlement_ledger，被拒绝的四条不进入；settlement_export.csv金额等于受控账本按租户和商户的汇总；tenant_access_probe.csv使用database_contract.csv声明的三条策略和调用者权限视图
-关键字段：四张CSV的voucher_id、tenant_id、merchant_id、object_name和probe_id
+检查项：跨报告追溯关系
+检查项内容：财务导出、冲销判定、访问记录和数据库合同能够回到同一组数据库对象
+标准答案：合格冲销进入受控账本，被拒绝冲销不进入；导出金额等于账本分组汇总；访问记录使用合同声明的策略与调用者权限视图
+关键字段：业务CSV中的voucher_id、tenant_id、merchant_id、object_name和probe_id
 容差：按业务主键与集合比较，CSV允许必要引号以及LF或CRLF行尾
-失败边界：拒绝冲销计入导出，报告间租户或商户冲突，探针引用不存在的权限对象，或输入文件发生变化
-可观察证据：四张CSV与settlement模式对象联查
-客观硬性标准：冲销、金额和权限三条追溯链全部闭合
-阈值：三条追溯链全部满足
+失败边界：拒绝冲销计入导出，报告间租户或商户冲突，访问记录引用不存在的权限对象，或输入发生变化
+可观察证据：业务CSV与settlement模式对象联查
+客观硬性标准：冲销、金额和权限关系均可双向追溯
+阈值：全部关系闭合
 优先级：普通项
 所属层级：L9跨产物一致性与可追溯层
