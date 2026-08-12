@@ -1,4 +1,4 @@
-操作系统：Windows11、macOS或主流64位Linux。
+操作系统： Windows11、macOS或主流64位Linux。
 
 主软件为PostgreSQL Client17或同系列兼容版本，需通过psql连接PostgreSQL17服务，执行临时表装载、DDL、PL/pgSQL、行级安全、角色切换、约束、触发器和系统目录查询。SQLite、PGlite、文本解析或电子表格不能代替这些数据库语义。
 
