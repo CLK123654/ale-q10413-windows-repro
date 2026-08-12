@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "task_id": "10413",
+  "change_scope": "score_environment_text_only_change",
+  "result": "PASS",
+  "score": {
+    "total_declared": 100,
+    "item_count": 7,
+    "items": [
+      {
+        "name": "交付结构与PostgreSQL入口",
+        "points": 10
+      },
+      {
+        "name": "来源保护与策略消费",
+        "points": 10
+      },
+      {
+        "name": "冲销裁决与数据库拒绝",
+        "points": 20
+      },
+      {
+        "name": "租户行级安全",
+        "points": 20
+      },
+      {
+        "name": "实际角色访问边界",
+        "points": 15
+      },
+      {
+        "name": "商户结算导出",
+        "points": 15
+      },
+      {
+        "name": "跨报告追溯关系",
+        "points": 10
+      }
+    ],
+    "points_sum": 100
+  },
+  "prompt_coverage_review": {
+    "completed": true,
+    "semantic_change_required": false,
+    "conclusion": "PostgreSQL入口、来源保护、冲销裁决、行级安全、角色边界、结算导出和跨报告追溯均有对应评分项"
+  },
+  "environment_coverage": {
+    "operating_system": true,
+    "primary_software_and_version": true,
+    "code_execution_dependency": true,
+    "cpu": true,
+    "gpu": true,
+    "disk": true,
+    "timeout": true,
+    "license_removed": true
+  },
+  "environment_license_text_present": false,
+  "field_name_count": 17,
+  "ale_csv_column_count": 19,
+  "attachment_sha256_before": {
+    "输入数据包.zip": "b4b91e830a25b9425b5c3ad19c12c65ea3636a98f18e9c69e271c946fceb83dd",
+    "reference.zip": "cf873113f32ff32654ca0ff50694d2858f460052cd48366082cde6b313ae9a76",
+    "关键标准答案.xlsx": "bb0a167e363df4321240b84e0454132a58a3d5443ebe6f527113bc00b5089efb",
+    "任务规格转化.xlsx": "353d5d064f5856a0cc6be7780bbaa08a71550d6ddb49ed9c6d5b90e640cbf3e2"
+  },
+  "attachment_sha256_after": {
+    "输入数据包.zip": "b4b91e830a25b9425b5c3ad19c12c65ea3636a98f18e9c69e271c946fceb83dd",
+    "reference.zip": "cf873113f32ff32654ca0ff50694d2858f460052cd48366082cde6b313ae9a76",
+    "关键标准答案.xlsx": "bb0a167e363df4321240b84e0454132a58a3d5443ebe6f527113bc00b5089efb",
+    "任务规格转化.xlsx": "353d5d064f5856a0cc6be7780bbaa08a71550d6ddb49ed9c6d5b90e640cbf3e2"
+  },
+  "attachments_unchanged": true,
+  "windows_rerun_required": false,
+  "lark_called": false,
+  "online_ai_detection_used_as_conclusion": false
+}

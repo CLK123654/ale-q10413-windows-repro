@@ -1,4 +1,7 @@
+总分100分
+
 检查项：交付结构与PostgreSQL入口
+分值：10分
 检查项内容：Prompt声明的SQL和业务报告位于对应路径，PowerShell入口调用psql完成处理
 标准答案：交付路径以Prompt为准，入口使用PostgreSQL17服务执行SQL并导出CSV
 关键字段：Prompt声明的相对路径；入口退出码；SHOW server_version_num
@@ -11,6 +14,7 @@
 所属层级：L8运行验证或可执行行为层
 
 检查项：来源保护与策略消费
+分值：10分
 检查项内容：raw模式来源表保持原值，结算筛选与冲销次序来自策略文件
 标准答案：来源表按各自主键逐列等值；settlement.policy覆盖settlement_policy.csv的业务键和值
 关键字段：raw模式来源表；settlement.policy的policy_kind、policy_key、policy_value、priority
@@ -23,6 +27,7 @@
 所属层级：L3输入数据导入与完整性层
 
 检查项：冲销裁决与数据库拒绝
+分值：20分
 检查项内容：原始冲销按settlement_policy.csv的priority裁决，非法写入由PostgreSQL约束或触发器拒绝
 标准答案：check_status、reason和expected_sqlstate由原凭证关系、金额镜像、时间顺序及策略映射复算；observed_sqlstate来自实际写入
 关键字段：reversal_review.csv的voucher_id、check_status、reason、expected_sqlstate、observed_sqlstate
@@ -35,6 +40,7 @@
 所属层级：L6领域计算与专业规则层
 
 检查项：租户行级安全
+分值：20分
 检查项内容：Prompt点名的结算表同时限制读取和写入，结算视图继承调用者权限
 标准答案：目标表启用并强制RLS，租户策略同时具有USING和WITH CHECK，settlement_export使用security_invoker
 关键字段：database_contract.csv的object_name、evidence_key、observed_value
@@ -47,6 +53,7 @@
 所属层级：L7产物结构 / Schema / 专业对象层
 
 检查项：实际角色访问边界
+分值：15分
 检查项内容：reader和writer在本租户、跨租户与空上下文中执行查询或写入
 标准答案：observed_rows由对应租户上下文查询复算；observed_sqlstate由受限写入产生；临时写入不进入最终账本
 关键字段：tenant_access_probe.csv的probe_id、role_name、tenant_context、statement_kind、observed_rows、observed_sqlstate
@@ -59,6 +66,7 @@
 所属层级：L8运行验证或可执行行为层
 
 检查项：商户结算导出
+分值：15分
 检查项内容：受控账本按租户和商户汇总凭证、金额、冲销与报表状态
 标准答案：业务主键来自合格租户和商户；计数与整数分金额由settlement_ledger分组复算；statement_status由净额规则确定
 关键字段：settlement_export.csv的tenant_id、merchant_id、posted_entry_count、gross_cents、fee_cents、net_cents、reversed_original_count、statement_status
@@ -71,6 +79,7 @@
 所属层级：L9跨产物一致性与可追溯层
 
 检查项：跨报告追溯关系
+分值：10分
 检查项内容：财务导出、冲销判定、访问记录和数据库合同能够回到同一组数据库对象
 标准答案：合格冲销进入受控账本，被拒绝冲销不进入；导出金额等于账本分组汇总；访问记录使用合同声明的策略与调用者权限视图
 关键字段：业务CSV中的voucher_id、tenant_id、merchant_id、object_name和probe_id
